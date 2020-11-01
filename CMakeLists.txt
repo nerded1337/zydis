@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+project(Zydis VERSION 3.1.0.0 LANGUAGES C CXX)
+
 include(GenerateExportHeader)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-
-project(Zydis VERSION 3.1.0.0 LANGUAGES C CXX)
 
 # =============================================================================================== #
 # Overridable options                                                                             #
@@ -158,23 +158,64 @@ endif ()
 
 zyan_set_source_group("Zydis")
 
-configure_package_config_file(cmake/zydis-config.cmake.in
+# =============================================================================================== #
+# Install rules                                                                                   #
+# =============================================================================================== #
+
+set(_config_install_dir "${CMAKE_INSTALL_PREFIX}/cmake")
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+
+# write_basic_package_version_file(
+#     "${version_config}" COMPATIBILITY SameMajorVersion
+# )
+
+configure_package_config_file(
+    "cmake/zydis-config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/zydis-config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
-)
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/zydis-config.cmake"
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
+    INSTALL_DESTINATION "${_config_install_dir}"
 )
 
-install(TARGETS "Zydis"
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES
+# Targets
+install(
+    TARGETS "Zydis"
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+# Headers
+install(
+    DIRECTORY
+    "include/"
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# Export headers
+install(
+    FILES
     "${PROJECT_BINARY_DIR}/ZydisExportConfig.h"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-install(DIRECTORY "include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+# Config
+install(
+    FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/zydis-config.cmake"
+    DESTINATION "${_config_install_dir}"
+)
+
+# Config
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "zydis::"
+    DESTINATION "${_config_install_dir}"
+)
+
+# =============================================================================================== #
+# Examples                                                                                        #
+# =============================================================================================== #
 
 function (_maybe_set_emscripten_cfg target)
     if (EMSCRIPTEN)
@@ -187,10 +228,6 @@ function (_maybe_set_emscripten_cfg target)
             "-s \"EXPORT_NAME='${target}'\" -s MODULARIZE=1")
     endif ()
 endfunction ()
-
-# =============================================================================================== #
-# Examples                                                                                        #
-# =============================================================================================== #
 
 if (ZYDIS_BUILD_EXAMPLES AND NOT ZYAN_NO_LIBC)
     if (ZYDIS_FEATURE_DECODER AND ZYDIS_FEATURE_FORMATTER AND (NOT ZYDIS_MINIMAL_MODE))
