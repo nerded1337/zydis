@@ -195,11 +195,10 @@ static int ZydisFuzzIteration(ZydisStreamRead read_fn, void* stream_ctx)
 
     // Fuzz tokenizer.
     const ZydisFormatterToken* token;
-    ZydisFormatterTokenizeInstruction(&formatter, &instruction, format_buffer, output_len,
+    status = ZydisFormatterTokenizeInstruction(&formatter, &instruction, format_buffer, output_len,
         control_block.u64, &token);
 
     // Walk tokens.
-    status = ZYAN_STATUS_SUCCESS;
     while (ZYAN_SUCCESS(status))
     {
         ZydisTokenType type;
