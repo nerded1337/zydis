@@ -198,6 +198,21 @@ static int ZydisFuzzIteration(ZydisStreamRead read_fn, void* stream_ctx)
     ZydisFormatterTokenizeInstruction(&formatter, &instruction, format_buffer, output_len,
         control_block.u64, &token);
 
+    // Walk tokens.
+    status = ZYAN_STATUS_SUCCESS;
+    while (ZYAN_SUCCESS(status))
+    {
+        ZydisTokenType type;
+        ZyanConstCharPointer value;
+        if (!ZYAN_SUCCESS(status = ZydisFormatterTokenGetValue(token, &type, &value)))
+        {
+            ZYDIS_MAYBE_FPUTS("Failed to get token value\n", ZYAN_STDERR);
+            break;
+        }
+
+        status = ZydisFormatterTokenNext(&token);
+    }
+
     if (instruction.operand_count > 0)
     {
         // Fuzz single operand formatting. We reuse rt-address for operand selection.
